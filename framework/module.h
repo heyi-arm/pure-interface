@@ -33,7 +33,7 @@ typedef struct {
 } subsystem_t;
 
 /* Subsystem instance name */
-#define subsystem(name) name ##_## subsystem
+#define subsystem(name) name ## _subsystem
 
 /* The trick is to use macro SUBSYSTEM() for both subsystem
  * declaration and definition. ARGC() macro chooses either
@@ -47,22 +47,22 @@ typedef struct {
 #define  OVERLOAD(M, S, ...) _OVERLOAD(M, S, __VA_ARGS__)
 
 #define SUBSYSTEM_DEFINE(name, _description, _version)		\
-	subsystem_t name ##_## subsystem = {			\
+	subsystem_t name ## _subsystem = {			\
 		.lock = RW_LOCK_UNLOCKED(lock),			\
 		.version = _version,				\
 		.description = _description,			\
 	}
 
-#define SUBSYSTEM_DECLARE(name) subsystem_t name ##_## subsystem
+#define SUBSYSTEM_DECLARE(name) subsystem_t name ## _subsystem
 #define SUBSYSTEM(...) OVERLOAD(SUBSYSTEM, ARGC(__VA_ARGS__), __VA_ARGS__)
 
 /* Subsystem API prototype name */
-#define api_proto(subsystem, api) subsystem ##_## api ##_## proto_t
+#define api_proto(subsystem, api) subsystem ##_## api ## _proto_t
 
 /* Subsystem API declaration */
 #define SUBSYSTEM_API(name, _return, api, ...) 			\
 	extern _return name ##_## api(__VA_ARGS__);		\
-	typedef _return (*name ##_## api ##_## proto_t)		\
+	typedef _return (*name ##_## api ## _proto_t)		\
 			(__VA_ARGS__)
 
 /* Subsystem API stubs are weak */
@@ -78,26 +78,26 @@ typedef struct {
 
 #define subsystem_constructor(name) 				\
 	do {							\
-		rwlock_init(&name ##_## subsystem.lock);	\
-		INIT_LIST_HEAD(&name ##_## subsystem.modules);	\
-		name ##_## subsystem.active = NULL;		\
+		rwlock_init(&name ## _subsystem.lock);	\
+		INIT_LIST_HEAD(&name ## _subsystem.modules);	\
+		name ## _subsystem.active = NULL;		\
 	} while(0)
 
 #define SUBSYSTEM_CONSTRUCTOR(name) 				\
 	static void __attribute__((constructor(101)))		\
-		name ##_## subsystem ##_## constructor(void)
+		name ## _subsystem_constructor(void)
 
 #define subsystem_lock(access, name)				\
-	rwlock_ ##access## _lock(&name ##_## subsystem.lock)
+	rwlock_ ##access## _lock(&name ## _subsystem.lock)
 
 #define subsystem_unlock(access, name)				\
-	rwlock_ ##access## _unlock(&name ##_## subsystem.lock)
+	rwlock_ ##access## _unlock(&name ## _subsystem.lock)
 
 #define subsystem_foreach_module(name, mod)			\
-	list_for_each_entry(mod, &name ##_## subsystem.modules, list)
+	list_for_each_entry(mod, &name ## _subsystem.modules, list)
 
 #define MODULE_CLASS(subsystem)					\
-	struct subsystem ##_## module {				\
+	struct subsystem ## _module {				\
 		struct list_head list;				\
 		void *handler; /* DSO */			\
 		const char *name;				\
@@ -116,7 +116,7 @@ typedef MODULE_CLASS(base) } module_base_t;
  */
 #define MODULE_CONSTRUCTOR(name) 				\
 	static void __attribute__((constructor(102)))		\
-		name ##_## module ##_## constructor(void)
+		name ## _module_constructor(void)
 
 /* Subsystem Modules Registration
  *
@@ -162,7 +162,7 @@ extern int __subsystem_register_module(subsystem_t *, module_base_t *);
 #define subsystem_register_module(name, module)			  \
 ({								  \
 	module_base_t *base = (module_base_t *)module;		  \
-	__subsystem_register_module(&name ##_## subsystem, base); \
+	__subsystem_register_module(&name ## _subsystem, base); \
 })
 
 #endif
