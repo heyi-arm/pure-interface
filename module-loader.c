@@ -2,13 +2,7 @@
 #include <dlfcn.h>
 #include "module.h"
 
-static const char *modules[] = {
-	"libpktio-loop.so",
-	"libpktio-socket.so",
-	"libscheduler-default.so",
-	 NULL};
-
-extern void dynamic_module_loader(void)
+void dynamic_module_loader(const char *modules[])
 {
 	void *handler = NULL;
 	const char **name = NULL;

@@ -3,6 +3,10 @@
 
 #include <stddef.h>
 
+#if defined(__STDC__)
+#define typeof __typeof__
+#endif
+
 /*
  * These are non-NULL pointers that will result in page faults
  * under normal circumstances, used to verify that nobody uses
@@ -35,8 +39,8 @@
 
 #define container_of(ptr, type, member)				\
 ({								\
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-        (type *)( (char *)__mptr - offsetof(type,member) );	\
+        typeof( ((type *)0)->member ) *__mptr = (ptr);		\
+        (type *)( (char *)__mptr - offsetof(type, member) );	\
 })
 
 /*

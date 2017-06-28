@@ -3,8 +3,6 @@
 
 #include "module.h"
 
-extern void dynamic_module_loader(void);
-
 /* Subsystems and APIs declaration */
 extern SUBSYSTEM(scheduler);
 

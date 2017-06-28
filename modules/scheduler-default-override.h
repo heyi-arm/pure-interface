@@ -14,9 +14,9 @@
  */
 
 extern int SUBSYSTEM_API_OVERRIDE(
-	scheduler, api_one, default_api_one)(void);
+	scheduler, api_one, default_scheduler_api_one)(void);
 
 extern const char *SUBSYSTEM_API_OVERRIDE(
-	scheduler, api_two, default_api_two)(int);
+	scheduler, api_two, default_scheduler_api_two)(int);
 
 #endif

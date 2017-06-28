@@ -4,32 +4,42 @@
 /* Default scheduler module to implement the scheduler subsystem:
  * should work in both statically linked and DSO builds.
  */
-static int default_api_one(void)
+static int default_scheduler_api_one(void)
 {
-	printf("scheduler default: api_one().\n");
+	printf("default scheduler: api_one().\n");
 	return 0;
 }
 
-static const char *default_api_two(int input)
+static const char *default_scheduler_api_two(int input)
 {
-	printf("scheduler default: api_two(%d).\n", input);
+	printf("default scheduler: api_two(%d).\n", input);
 	return NULL;
 }
 
-scheduler_module_t scheduler_default = {
-	.name = "scheduler default",
-	.init_local = NULL,
-	.term_local = NULL,
-	.init_global = NULL,
-	.term_global = NULL,
-	.api_one = default_api_one,
-	.api_two = default_api_two,
+static int default_scheduler_init(void)
+{
+	printf("default scheduler module init.\n");
+	return 0;
+}
+
+static int default_scheduler_term(void)
+{
+	printf("default scheduler module term.\n");
+	return 0;
+}
+
+scheduler_module_t default_scheduler = {
+	.name = "default scheduler",
+	.init = default_scheduler_init,
+	.term = default_scheduler_term,
+	.api_one = default_scheduler_api_one,
+	.api_two = default_scheduler_api_two,
 };
 
-MODULE_CONSTRUCTOR(scheduler_default)
+MODULE_CONSTRUCTOR(default_scheduler)
 {
-	INIT_LIST_HEAD(&scheduler_default.list);
+	INIT_LIST_HEAD(&default_scheduler.list);
 
-	printf("scheduler default module register.\n");
-	subsystem_register_module(scheduler, &scheduler_default);
+	printf("default scheduler module register.\n");
+	subsystem_register_module(scheduler, &default_scheduler);
 }

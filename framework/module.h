@@ -27,6 +27,7 @@
 typedef struct {
 	rwlock_t lock;
 	uint32_t version;
+	const char *name;
 	const char *description;
 	struct list_head modules;
 	struct list_head *active;
@@ -46,14 +47,15 @@ typedef struct {
 #define _OVERLOAD(M, S, ...) M ## _ ## S(__VA_ARGS__)
 #define  OVERLOAD(M, S, ...) _OVERLOAD(M, S, __VA_ARGS__)
 
-#define SUBSYSTEM_DEFINE(name, _description, _version)		\
-	subsystem_t name ## _subsystem = {			\
+#define SUBSYSTEM_DEFINE(_name, _description, _version)		\
+	subsystem_t subsystem(_name) = {			\
 		.lock = RW_LOCK_UNLOCKED(lock),			\
+		.name = # _name,				\
 		.version = _version,				\
 		.description = _description,			\
 	}
 
-#define SUBSYSTEM_DECLARE(name) subsystem_t name ## _subsystem
+#define SUBSYSTEM_DECLARE(name) subsystem_t subsystem(name)
 #define SUBSYSTEM(...) OVERLOAD(SUBSYSTEM, ARGC(__VA_ARGS__), __VA_ARGS__)
 
 /* Subsystem API prototype name */
@@ -62,8 +64,7 @@ typedef struct {
 /* Subsystem API declaration */
 #define SUBSYSTEM_API(name, _return, api, ...) 			\
 	extern _return name ##_## api(__VA_ARGS__);		\
-	typedef _return (*name ##_## api ## _proto_t)		\
-			(__VA_ARGS__)
+	typedef _return (*api_proto(name, api))(__VA_ARGS__)	\
 
 /* Subsystem API stubs are weak */
 #define SUBSYSTEM_API_STUB(name, api) 				\
@@ -78,9 +79,9 @@ typedef struct {
 
 #define subsystem_constructor(name) 				\
 	do {							\
-		rwlock_init(&name ## _subsystem.lock);	\
-		INIT_LIST_HEAD(&name ## _subsystem.modules);	\
-		name ## _subsystem.active = NULL;		\
+		rwlock_init(&subsystem(name).lock);		\
+		INIT_LIST_HEAD(&subsystem(name).modules);	\
+		subsystem(name).active = NULL;			\
 	} while(0)
 
 #define SUBSYSTEM_CONSTRUCTOR(name) 				\
@@ -88,23 +89,21 @@ typedef struct {
 		name ## _subsystem_constructor(void)
 
 #define subsystem_lock(access, name)				\
-	rwlock_ ##access## _lock(&name ## _subsystem.lock)
+	rwlock_ ##access## _lock(&subsystem(name).lock)
 
 #define subsystem_unlock(access, name)				\
-	rwlock_ ##access## _unlock(&name ## _subsystem.lock)
+	rwlock_ ##access## _unlock(&subsystem(name).lock)
 
 #define subsystem_foreach_module(name, mod)			\
-	list_for_each_entry(mod, &name ## _subsystem.modules, list)
+	list_for_each_entry(mod, &subsystem(name).modules, list)
 
 #define MODULE_CLASS(subsystem)					\
 	struct subsystem ## _module {				\
 		struct list_head list;				\
-		void *handler; /* DSO */			\
 		const char *name;				\
-		int (*init_local)(void);			\
-		int (*term_local)(void);			\
-		int (*init_global)(void);			\
-		int (*term_global)(void);			\
+		void *handler; /* DSO */			\
+		int (*init)(void);				\
+		int (*term)(void);				\
 
 /* Base class to all inherited subsystem module classes */
 typedef MODULE_CLASS(base) } module_base_t;
@@ -117,6 +116,29 @@ typedef MODULE_CLASS(base) } module_base_t;
 #define MODULE_CONSTRUCTOR(name) 				\
 	static void __attribute__((constructor(102)))		\
 		name ## _module_constructor(void)
+
+/* All subsystems' initialization and termination routines are
+ * the same, provide template to instantiation.
+ */
+#define SUBSYSTEM_INITERM_TEMPLATE(subs, method, print)		\
+static inline int subs ## _subsystem ##_## method(void)		\
+{								\
+	module_base_t *mod = NULL;				\
+								\
+	subsystem_lock(read, subs);				\
+	subsystem_foreach_module(subs, mod) {			\
+		int result = mod->method ? mod->method() : -1;	\
+		if (result < 0) {				\
+			subsystem_unlock(read, subs);		\
+			print("error %d to %s subsystem %s "	\
+			      "module %s.\n", result, # method, \
+			      subsystem(subs).name, mod->name);	\
+			return result;				\
+		}						\
+	}							\
+	subsystem_unlock(read, subs);				\
+	return 0;						\
+}
 
 /* Subsystem Modules Registration
  *
@@ -158,11 +180,11 @@ extern int module_abandon_dso(void);
 
 extern int __subsystem_register_module(subsystem_t *, module_base_t *);
 
-/* Macro to allow polymorphism on module data structures */
-#define subsystem_register_module(name, module)			  \
-({								  \
-	module_base_t *base = (module_base_t *)module;		  \
-	__subsystem_register_module(&name ## _subsystem, base); \
+/* Macro to allow polymorphism on module classes */
+#define subsystem_register_module(name, module)			\
+({								\
+	module_base_t *base = (module_base_t *)module;		\
+	__subsystem_register_module(&subsystem(name), base);	\
 })
 
 #endif

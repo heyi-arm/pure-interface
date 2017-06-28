@@ -6,4 +6,9 @@
 *.E
 *.po
 *.so
-main*
+main
+main-preload
+main-static
+main-static-override
+all-modules.c
+empty-modules.c

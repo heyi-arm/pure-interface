@@ -6,17 +6,27 @@
 SUBSYSTEM(module, "module framework", MODULE_FRAMEWORK_VERSION);
 
 /* Keep it simple, allow one registration session at a time. */
-typedef struct {
+static struct {
 	rwlock_t lock;
 	subsystem_t *subsystem;
 	module_base_t *module;
-} registration_session_t;
-
-static registration_session_t registration = {
+} registration = {
 	.lock = RW_LOCK_UNLOCKED(lock),
 	.subsystem = NULL,
 	.module = NULL,
 };
+
+#define REGISTRATION_SANITY_CHECK(subsystem, module)		\
+do {								\
+	if (subsystem == NULL || module == NULL)		\
+		return -ENOENT;					\
+								\
+	if (!list_empty(&module->list)) {			\
+		printf("module %s was already registered.\n",	\
+		        module->name);				\
+		return -EAGAIN;					\
+	}							\
+} while(0)
 
 /* Module is linked statically or dynamically, and are loaded by
  * program loader (execve) or dynamic linker/loader (ld.so)
@@ -27,19 +37,15 @@ static registration_session_t registration = {
 static int linker_register_module(
 	subsystem_t *subsystem, module_base_t *module)
 {
-	if (subsystem == NULL || module == NULL)
-		return -ENOENT;
+	REGISTRATION_SANITY_CHECK(subsystem, module);
 
-	if (!list_empty(&module->list)) {
-		printf("module %s was already registered.\n",
-		        module->name);
-		return -EAGAIN;
-	}
-
+	/* Allow one registration session at a time */
 	rwlock_write_lock(&registration.lock);
 
-	module->handler = NULL;
+	/* Block the subsystem API calls in load new
+	 * implementation modules. */
 	rwlock_write_lock(&subsystem->lock);
+	module->handler = NULL; /* no DSO handler */
 	list_add(&module->list, &subsystem->modules);
 	rwlock_write_unlock(&subsystem->lock);
 
@@ -53,15 +59,10 @@ static int (*do_register_module)(subsystem_t *, module_base_t *)
 static int loader_register_module(
 	subsystem_t *subsystem, module_base_t *module)
 {
-	if (subsystem == NULL || module == NULL)
-		return -ENOENT;
+	REGISTRATION_SANITY_CHECK(subsystem, module);
 
-	if (!list_empty(&module->list)) {
-		printf("module %s was already registered.\n",
-		        module->name);
-		return -EAGAIN;
-	}
-
+	/* Registration session lock must be held by
+	 * module_loader_start(). */
 	if (rwlock_write_trylock(&registration.lock) == 0) {
 		registration.subsystem = subsystem;
 		registration.module = module;
@@ -112,8 +113,8 @@ int module_install_dso(void *dso)
 		module_base_t *module = registration.module;
 
 		if (subsystem != NULL && module != NULL) {
-			module->handler = dso;
 			rwlock_write_lock(&subsystem->lock);
+			module->handler = dso;
 			list_add(&module->list, &subsystem->modules);
 			rwlock_write_unlock(&subsystem->lock);
 		}
