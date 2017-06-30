@@ -1,3 +1,4 @@
+CP := cp
 AR := ar
 CC := gcc
 PWD := $(shell pwd)
@@ -46,7 +47,7 @@ main: main.o all-modules.o $(INTERFACE_LIBRARY)
 	$(CC) $< all-modules.o -L"${PWD}" \
 	  -Wl,-R"${PWD}" -lpure-interface -o $@
 
-main-preload: main.o empty-modules.o $(INTERFACE_LIBRARY)
+main-preload: main.o empty-modules.o $(INTERFACE_LIBRARY) $(ALL_MODULES_OVERRIDE)
 	$(CC) $< empty-modules.o -L"${PWD}" \
 	  -Wl,-R"${PWD}" -lpure-interface -o $@
 
