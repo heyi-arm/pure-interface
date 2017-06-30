@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * Modular programming framework to support runtime selectable
+ * Modular programming framework supports runtime selectable
  * implementations for variant software subsystems.
  *
  * Multiple implementations of the same subsystem can be built
@@ -13,8 +13,13 @@
  *
  * Alternatively, subsystem can load multiple implementations
  * and determine the APIs route in runtime.
+
+ * Also in need to pursue extreme performance the subsystem
+ * can choose one specific implementation module and build it
+ * to override subsystem API symbols directly, thus eliminate
+ * one level indirection of API calls through function pointers.
  *
- * this framework tries to minimizes dependencies to the linked
+ * This framework tries to minimizes dependencies to the linked
  * list and rwlock facilities only.
  */
 

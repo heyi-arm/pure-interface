@@ -1,11 +1,27 @@
 # pure-interface
 
-### This project experiments software technologies to support:
+### This project experiments Modular Programming Framework
 
-* Multiple implementations of software components in a modular framework
-* Build implementations as static libraries or DSOs (loadable modules)
-* Software component to route API calls to either implementation in runtime
-* Override APIs with specific implementation in both static and DSO builds
+Modular Programming Framework supports runtime selectable
+implementations for variant software subsystems.
+
+Multiple implementations of the same subsystem can be built
+into individual static libraries or loadable DSOs, and use
+constructor functions to register themselves.
+
+A subsystem can choose one active implementation and provide
+APIs to switch between implementations.
+
+Alternatively, subsystem can load multiple implementations
+and determine the APIs route in runtime.
+
+Also in need to pursue extreme performance the subsystem
+can choose one specific implementation module and build it
+to override subsystem API symbols directly, thus eliminate
+one level indirection of API calls through function pointers.
+
+This framework tries to minimizes dependencies to the linked
+list and rwlock facilities only.
 
 ### Abstractions: (to write a software library)
 
@@ -30,15 +46,25 @@
 
 * Build targets (to demonstrate):
   * main (with DSOs)
-    * The dynamic module loader loads modules (libscheduler-default.so,)
+    * make main
+    * run ./main
+    * The dynamic module loader loads all modules through libdl.so APIs
       and the subsystem API stubs route the calls to the loaded modules
+  * main-preload (with override DSOs)
+    * make main-preload
+    * make modules/libscheduler-default-override.so
+    * run PRE_LOAD=modules/libscheduler-default-override.so ./main-preload
+    * The preloaded DSO will override the scheduler subsystem API symbols
+      directly and eliminate one level indirection of API calls through
+      function pointers.
   * main-static
-    * The static built modules (libscheduler-default.a,) are compiled in
-      and the subsystem API stubs can route the call to the static modules.
+    * make main-static
+    * run ./main-static
+    * The static built modules are compiled in and the subsystem API stubs
+      route the calls to the static modules.
   * main-static-overload
-    * Scheduler API stubs can be overridden by static implementation module
-      (libscheduler-default-override.a)
-  * libscheduler-default-override.so
-    * run command "$LD_PRELOAD=./libscheduler-default-override.so main" to
-      observe that scheduler API stubs can be overridden by DSO implementation
-      module.
+    * make main-static-override
+    * run ./main-static-override
+    * The static built module will override the scheduler subsystem API
+      symbols directly and eliminate one level indirection of API calls
+      through function pointers.
