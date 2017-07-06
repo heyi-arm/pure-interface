@@ -11,10 +11,16 @@ pktio_socket_sources := modules/pktio-socket.c
 pktio_socket_override_sources := modules/pktio-socket-override.c
 ALL_MODULES += $(PKTIO_SOCKET)
 
+# choose loopback pktio as the active implementation
+modules/pktio-loopback%o: CFLAGS += -DIM_ACTIVE_MODULE
+
 SCHEDULER_DEFAULT := modules/libscheduler-default.so
 scheduler_default_sources := modules/scheduler-default.c
 scheduler_default_override_sources := modules/scheduler-default-override.c
 ALL_MODULES += $(SCHEDULER_DEFAULT)
+
+# choose default scheduler as the active implementation
+modules/scheduler-default%o: CFLAGS += -DIM_ACTIVE_MODULE
 
 ALL_MODULES_STATIC := $(patsubst %.so,%.a, $(ALL_MODULES))
 ALL_MODULES_OVERRIDE := $(patsubst %.so,%-override.so, $(ALL_MODULES))

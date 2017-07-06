@@ -103,7 +103,7 @@ void module_loader_end(void)
 	rwlock_write_unlock(&registration.lock);
 }
 
-int module_install_dso(void *dso)
+int module_install_dso(void *dso, bool active)
 {
 	/* Bottom halves of the registration, context exclusion
 	 * is guarenteed by module_loader_start()
@@ -114,8 +114,14 @@ int module_install_dso(void *dso)
 
 		if (subsystem != NULL && module != NULL) {
 			rwlock_write_lock(&subsystem->lock);
+
 			module->handler = dso;
 			list_add(&module->list, &subsystem->modules);
+
+			/* install as active implementation */
+			if (active == true) /* warn: replaceable */
+				subsystem->active = &module->list;
+
 			rwlock_write_unlock(&subsystem->lock);
 		}
 

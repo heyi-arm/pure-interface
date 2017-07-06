@@ -26,6 +26,7 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <stdbool.h>
 #include "list.h"
 #include "rwlock.h"
 
@@ -180,16 +181,28 @@ static inline int subs ## _subsystem ##_## method(void)		\
 extern void module_loader_start(void);
 extern void module_loader_end(void);
 
-extern int module_install_dso(void *);
+extern int module_install_dso(void *, bool active);
 extern int module_abandon_dso(void);
 
-extern int __subsystem_register_module(subsystem_t *, module_base_t *);
+#define __maybe_unused __attribute__((unused))
+static inline void __subsystem_set_active(
+	subsystem_t *subsystem __maybe_unused,
+		module_base_t *module __maybe_unused)
+{
+#if defined(IM_ACTIVE_MODULE)
+	subsystem->active = &module->list;
+#endif
+}
+
+extern int __subsystem_register_module(
+		subsystem_t *, module_base_t *);
 
 /* Macro to allow polymorphism on module classes */
 #define subsystem_register_module(name, module)			\
 ({								\
 	module_base_t *base = (module_base_t *)module;		\
 	__subsystem_register_module(&subsystem(name), base);	\
+	__subsystem_set_active(&subsystem(name), base);		\
 })
 
 #endif

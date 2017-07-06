@@ -62,7 +62,7 @@ list and rwlock facilities only.
     * run ./main-static
     * The static built modules are compiled in and the subsystem API stubs
       route the calls to the static modules.
-  * main-static-overload
+  * main-static-override
     * make main-static-override
     * run ./main-static-override
     * The static built module will override the scheduler subsystem API
