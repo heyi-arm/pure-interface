@@ -21,7 +21,7 @@ do {								\
 	if (subsystem == NULL || module == NULL)		\
 		return -ENOENT;					\
 								\
-	if (!list_empty(&module->list)) {			\
+	if (!list_node_detached(&module->list)) {		\
 		printf("module %s was already registered.\n",	\
 		        module->name);				\
 		return -EAGAIN;					\
@@ -46,7 +46,7 @@ static int linker_register_module(
 	 * implementation modules. */
 	rwlock_write_lock(&subsystem->lock);
 	module->handler = NULL; /* no DSO handler */
-	list_add(&module->list, &subsystem->modules);
+	list_add_tail(&subsystem->modules, &module->list);
 	rwlock_write_unlock(&subsystem->lock);
 
 	rwlock_write_unlock(&registration.lock);
@@ -116,7 +116,7 @@ int module_install_dso(void *dso, bool active)
 			rwlock_write_lock(&subsystem->lock);
 
 			module->handler = dso;
-			list_add(&module->list, &subsystem->modules);
+			list_add_tail(&subsystem->modules, &module->list);
 
 			/* install as active implementation */
 			if (active == true) /* warn: replaceable */

@@ -36,7 +36,7 @@ typedef struct {
 	const char *name;
 	const char *description;
 	struct list_head modules;
-	struct list_head *active;
+	struct list_node *active;
 } subsystem_t;
 
 /* Subsystem instance name */
@@ -86,7 +86,7 @@ typedef struct {
 #define subsystem_constructor(name) 				\
 	do {							\
 		rwlock_init(&subsystem(name).lock);		\
-		INIT_LIST_HEAD(&subsystem(name).modules);	\
+		list_head_init(&subsystem(name).modules);	\
 		subsystem(name).active = NULL;			\
 	} while(0)
 
@@ -101,11 +101,11 @@ typedef struct {
 	rwlock_ ##access## _unlock(&subsystem(name).lock)
 
 #define subsystem_foreach_module(name, mod)			\
-	list_for_each_entry(mod, &subsystem(name).modules, list)
+	list_for_each_entry(&subsystem(name).modules, mod, list)
 
 #define MODULE_CLASS(subsystem)					\
 	struct subsystem ## _module {				\
-		struct list_head list;				\
+		struct list_node list;				\
 		const char *name;				\
 		void *handler; /* DSO */			\
 		int (*init)(void);				\
