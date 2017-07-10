@@ -38,7 +38,7 @@ scheduler_module_t default_scheduler = {
 
 MODULE_CONSTRUCTOR(default_scheduler)
 {
-	list_node_init(&default_scheduler.list);
+	module_constructor(&default_scheduler);
 
 	printf("default scheduler module register.\n");
 	subsystem_register_module(scheduler, &default_scheduler);

@@ -114,6 +114,9 @@ typedef struct {
 /* Base class to all inherited subsystem module classes */
 typedef MODULE_CLASS(base) } module_base_t;
 
+#define module_constructor(mod) 				\
+	do { list_node_init(&(mod)->list); } while(0)
+
 /* Module constructors should be late than subsystem constructors,
  * in statically linked scenarios (both subsystems and modules are
  * linked statically). thus the priority 102 compared to the above

@@ -26,7 +26,7 @@ pktio_module_t loopback_pktio = {
 
 MODULE_CONSTRUCTOR(loopback_pktio)
 {
-	list_node_init(&loopback_pktio.list);
+	module_constructor(&loopback_pktio);
 
 	printf("loopback pktio module register.\n");
 	subsystem_register_module(pktio, &loopback_pktio);

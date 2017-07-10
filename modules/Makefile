@@ -23,6 +23,7 @@ ALL_MODULES += $(SCHEDULER_DEFAULT)
 modules/scheduler-default%o: CFLAGS += -DIM_ACTIVE_MODULE
 
 ALL_MODULES_STATIC := $(patsubst %.so,%.a, $(ALL_MODULES))
+ALL_MODULES_DYNAMIC := $(patsubst modules/lib%.so,-l%, $(ALL_MODULES))
 ALL_MODULES_OVERRIDE := $(patsubst %.so,%-override.so, $(ALL_MODULES))
 ALL_MODULES_STATIC_OVERRIDE := $(patsubst %.so,%.a, $(ALL_MODULES_OVERRIDE))
 

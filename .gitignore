@@ -6,7 +6,8 @@
 *.E
 *.po
 *.so
-main
+main-plugin
+main-dynamic
 main-preload
 main-static
 main-static-override

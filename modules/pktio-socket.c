@@ -26,7 +26,7 @@ pktio_module_t socket_pktio = {
 
 MODULE_CONSTRUCTOR(socket_pktio)
 {
-	list_node_init(&socket_pktio.list);
+	module_constructor(&socket_pktio);
 
 	printf("socket pktio module register.\n");
 	subsystem_register_module(pktio, &socket_pktio);

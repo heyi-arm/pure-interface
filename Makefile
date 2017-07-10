@@ -43,9 +43,21 @@ empty-modules.c:
 	echo "#include <stddef.h>" > $@
 	echo "const char *all_modules[] = { NULL };" >> $@
 
-main: main.o all-modules.o $(INTERFACE_LIBRARY)
+main-plugin: main.o all-modules.o $(INTERFACE_LIBRARY)
 	$(CC) $< all-modules.o -L"${PWD}" \
 	  -Wl,-R"${PWD}" -lpure-interface -o $@
+
+# In dynamic link use, constructor order was not implemented
+# by __attribute__((constructor(priority))), seems problem with
+# ld-linux.so!
+#
+# Workaround with command line link order, always put interface
+# libraries (subsystems) at last and constructors will be invoked
+# in reverse order.
+main-dynamic: main.o empty-modules.o $(INTERFACE_LIBRARY) $(ALL_MODULES)
+	$(CC) $< empty-modules.o -L"${PWD}" -L"${PWD}/modules" \
+	  -Wl,-R"${PWD}/modules" -Wl,--no-as-needed $(ALL_MODULES_DYNAMIC) \
+	  -Wl,-R"${PWD}" -Wl,--as-needed -lpure-interface -o $@
 
 main-preload: main.o empty-modules.o $(INTERFACE_LIBRARY) $(ALL_MODULES_OVERRIDE)
 	$(CC) $< empty-modules.o -L"${PWD}" \
@@ -65,7 +77,8 @@ main-static-override: main.o empty-modules.o \
 
 clean:
 	rm -f all-modules.c empty-modules.c
-	rm -f main main-preload main-static main-static-override
+	rm -f main-plugin main-dynamic main-preload
+	rm -f main-static main-static-override
 	find $(PWD) -regex ".*\.\(po\|so\|o\|E\|a\)$$" -delete
 
 .PHONY: all clean

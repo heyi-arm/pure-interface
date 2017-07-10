@@ -45,11 +45,23 @@ list and rwlock facilities only.
   * Pktio has two implementations: pktio-loop and pktio-socket
 
 * Build targets (to demonstrate):
-  * main (with DSOs)
-    * make main
-    * run ./main
+  * main-plugin (load DSOs by plugin loader)
+    * make main-plugin
+    * run ./main-plugin
     * The dynamic module loader loads all modules through libdl.so APIs
       and the subsystem API stubs route the calls to the loaded modules
+  * main-dynamic (link DSOs with gcc -l option)
+    * make main-dynamic
+    * run ./main-dynamic
+    * Link interface library as well as module DSOs and the application
+      works the same way as plugin loader.
+    * One problem is impl module DSOs have no symbol references, thus
+      will not be added into DT_NEEDED section in dynamic link, need to
+      add option -W,l--no-as-needed while link module DSOs.
+    * Another problem is constructor order was not implemented by
+      __attribute__((constructor(priority))), seems problem with ld-linux.so!
+      Workaround with command line link order, always put interface libraries
+      (subsystems) at last and constructors will be invoked in reverse order.
   * main-preload (with override DSOs)
     * make main-preload
     * make modules/libscheduler-default-override.so
