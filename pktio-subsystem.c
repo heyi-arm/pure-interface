@@ -20,8 +20,7 @@ int SUBSYSTEM_API_STUB(pktio, api_one)(void)
 	/* pktio API one only route to the active
 	 * implementation.
 	 */
-	module = list_entry(subsystem(pktio).active,
-				pktio_module_t, list);
+	module = subsystem_active_module(pktio, module);
 
 	if (module != NULL && module->api_one != NULL)
 		result = module->api_one();

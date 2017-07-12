@@ -4,6 +4,18 @@
 /* socket pktio module to implement the pktio subsystem:
  * should work in both statically linked and DSO builds.
  */
+static int socket_pktio_api_one(void)
+{
+	printf("socket pktio: api_one().\n");
+	return 0;
+}
+
+static const char *socket_pktio_api_two(int input)
+{
+	printf("socket pktio: api_two(%d).\n", input);
+	return NULL;
+}
+
 static int socket_pktio_init(void)
 {
 	printf("socket pktio module init.\n");
@@ -20,8 +32,8 @@ pktio_module_t socket_pktio = {
 	.name = "socket pktio",
 	.init = socket_pktio_init,
 	.term = socket_pktio_term,
-	.api_one = NULL,
-	.api_two = NULL,
+	.api_one = socket_pktio_api_one,
+	.api_two = socket_pktio_api_two,
 };
 
 MODULE_CONSTRUCTOR(socket_pktio)

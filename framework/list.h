@@ -52,12 +52,6 @@
 	*__p = (typeof(x)) (val);				\
 })
 
-#define container_of(ptr, type, member)				\
-({								\
-        typeof( ((type *)0)->member ) *__mptr = (ptr);		\
-        (type *)( (char *)__mptr - offsetof(type, member) );	\
-})
-
 /**
  * struct list_node - an entry in a doubly-linked list
  * @next: next entry (self if empty)
@@ -78,7 +72,7 @@ struct list_node
 
 /**
  * struct list_head - the head of a doubly-linked list
- * @h: the list_head (containing next and prev pointers)
+ * @node: the head node
  *
  * This is used as the head of a linked list.
  * Example:
@@ -90,7 +84,7 @@ struct list_node
  */
 struct list_head
 {
-	struct list_node n;
+	struct list_node node;
 };
 
 /**
@@ -105,7 +99,7 @@ struct list_head
  * Example:
  *	static struct list_head my_list = LIST_HEAD_INIT(my_list);
  */
-#define LIST_HEAD_INIT(name) { { &(name).n, &(name).n } }
+#define LIST_HEAD_INIT(name) { { &(name).node, &(name).node } }
 
 /**
  * LIST_HEAD - define and initialize an empty list_head
@@ -136,7 +130,7 @@ struct list_head
  */
 static inline void list_head_init(struct list_head *h)
 {
-	h->n.next = h->n.prev = &h->n;
+	h->node.next = h->node.prev = &h->node;
 }
 
 /**
@@ -192,7 +186,7 @@ static inline void list_add_after(struct list_node *p,
 static inline void list_add(struct list_head *h,
 			    struct list_node *n)
 {
-	list_add_after(&h->n, n);
+	list_add_after(&h->node, n);
 }
 
 /**
@@ -231,7 +225,7 @@ static inline void list_add_before(struct list_node *p,
 static inline void list_add_tail(struct list_head *h,
 				 struct list_node *n)
 {
-	list_add_before(&h->n, n);
+	list_add_before(&h->node, n);
 }
 
 /**
@@ -245,7 +239,7 @@ static inline void list_add_tail(struct list_head *h,
  */
 static inline bool list_empty(const struct list_head *h)
 {
-	return READ_ONCE(h->n.next) == &h->n;
+	return READ_ONCE(h->node.next) == &h->node;
 }
 
 /**
@@ -303,50 +297,5 @@ static inline void list_del_init(struct list_node *n)
 	list_del(n);
 	list_node_init(n);
 }
-
-/**
- * list_entry - convert a list_node back into the structure containing it.
- * @ptr: the list_node
- * @type: the type of the entry
- * @member: the list_node member of the type
- *
- * Example:
- *	// First list entry is children.next; convert back to child.
- *	child = list_entry(parent->children.n.next, struct child, list);
- *
- * See Also:
- *	list_for_each_entry()
- */
-#define list_entry(ptr, type, member) container_of(ptr, type, member)
-
-/**
- * list_first_entry - read first node as container structure
- * @__h: list_node of the list_head
- * @type: the type of the entry
- * @member: the list_node member of the type
- *
- * Note, that list is expected to be not empty.
- */
-#define list_1st_entry(__h, type, member) \
-	list_entry((__h)->next, type, member)
-
-/**
- * list_next_entry - read next node as container structure
- * @__i: the current list_node
- * @member: the list_node member of the type
- */
-#define list_next_entry(__p, member) \
-	list_entry((__p)->member.next, typeof(*(__p)), member)
-
-#define list_for_each_entry(h, p, member)			\
-	for (p = list_1st_entry(&(h)->n, typeof(*p), member);	\
-	     &p->member != &(h)->n;				\
-	     p = list_next_entry(p, member))
-
-#define list_for_each_entry_safe(h, p, n, member)		\
-	for (p = list_1st_entry(&(h)->n, typeof(*p), member),	\
-	     n = list_next_entry(p, member);			\
-	     &p->member != &(h)->n; 				\
-	     p = n, n = list_next_entry(n, member))
 
 #endif /* CCAN_LIST_H */

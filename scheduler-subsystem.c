@@ -21,8 +21,7 @@ int SUBSYSTEM_API_STUB(scheduler, api_one)(void)
 	/* scheduler API one only route to the active
 	 * implementation.
 	 */
-	module = list_entry(subsystem(scheduler).active,
-				scheduler_module_t, list);
+	module = subsystem_active_module(scheduler, module);
 
 	if (module != NULL && module->api_one != NULL)
 		result = module->api_one();

@@ -100,8 +100,37 @@ typedef struct {
 #define subsystem_unlock(access, name)				\
 	rwlock_ ##access## _unlock(&subsystem(name).lock)
 
+/* Below macros assume that all module classes derive from
+ * module_base_t class by using MODULE_CLASS macro in their
+ * typedefs and have list_node as their 1st member named "list".
+ *
+ * This greatly reduces the complexity for subsystem's module
+ * list iteration and module pointer recovery from its list_node
+ * member by a forced type conversion intead of complex calls to
+ * container_of() etc.
+ */
+#define __force_cast(module, node)				\
+	((typeof(module)) ((void *)(node)))
+
+#define subsystem_active_module(name, mod)			\
+	__force_cast(mod, subsystem(name).active)
+
+#define __foreach_module(pos, head)				\
+	for (pos = __force_cast(pos, (head)->node.next);	\
+	     pos != __force_cast(pos, head);			\
+	     pos = __force_cast(pos, (pos)->list.next))
+
+#define __foreach_module_safe(pos, n, head)			\
+	for (pos = __force_cast(pos, (head)->node.next),	\
+	     n = __force_cast(pos, (pos)->list.next);		\
+	     pos != __force_cast(pos, head);			\
+	     pos = n, n = __force_cast(next, (next)->list.next))
+
 #define subsystem_foreach_module(name, mod)			\
-	list_for_each_entry(&subsystem(name).modules, mod, list)
+	__foreach_module(mod, &subsystem(name).modules)
+
+#define subsystem_foreach_module_safe(name, mod, next)		\
+	__foreach_module_safe(mod, next, &subsystem(name).modules)
 
 #define MODULE_CLASS(subsystem)					\
 	struct subsystem ## _module {				\
