@@ -55,7 +55,7 @@ typedef struct {
 
 #define SUBSYSTEM_DEFINE(_name, _description, _version)		\
 	subsystem_t subsystem(_name) = {			\
-		.lock = RW_LOCK_UNLOCKED(lock),			\
+		.lock = RW_LOCK_UNLOCKED,			\
 		.name = # _name,				\
 		.version = _version,				\
 		.description = _description,			\
@@ -68,12 +68,12 @@ typedef struct {
 #define api_proto(subsystem, api) subsystem ##_## api ## _proto_t
 
 /* Subsystem API declaration */
-#define SUBSYSTEM_API(name, _return, api, ...) 			\
+#define SUBSYSTEM_API(name, _return, api, ...)			\
 	extern _return name ##_## api(__VA_ARGS__);		\
 	typedef _return (*api_proto(name, api))(__VA_ARGS__)	\
 
 /* Subsystem API stubs are weak */
-#define SUBSYSTEM_API_STUB(name, api) 				\
+#define SUBSYSTEM_API_STUB(name, api)				\
 	__attribute__((weak)) name ##_## api
 
 /* In case subsystem API implementations are built as static
@@ -83,14 +83,14 @@ typedef struct {
 #define SUBSYSTEM_API_OVERRIDE(name, api, _alias)		\
 	__attribute__((alias(#_alias))) name ##_## api
 
-#define subsystem_constructor(name) 				\
+#define subsystem_constructor(name)				\
 	do {							\
 		rwlock_init(&subsystem(name).lock);		\
 		list_head_init(&subsystem(name).modules);	\
 		subsystem(name).active = NULL;			\
-	} while(0)
+	} while (0)
 
-#define SUBSYSTEM_CONSTRUCTOR(name) 				\
+#define SUBSYSTEM_CONSTRUCTOR(name)				\
 	static void __attribute__((constructor(101)))		\
 		name ## _subsystem_constructor(void)
 
@@ -106,11 +106,11 @@ typedef struct {
  *
  * This greatly reduces the complexity for subsystem's module
  * list iteration and module pointer recovery from its list_node
- * member by a forced type conversion intead of complex calls to
+ * member by a forced type conversion instead of complex calls to
  * container_of() etc.
  */
 #define __force_cast(module, node)				\
-	((typeof(module)) ((void *)(node)))
+	((typeof(module))((void *)(node)))
 
 #define subsystem_active_module(name, mod)			\
 	__force_cast(mod, subsystem(name).active)
@@ -143,15 +143,14 @@ typedef struct {
 /* Base class to all inherited subsystem module classes */
 typedef MODULE_CLASS(base) } module_base_t;
 
-#define module_constructor(mod) 				\
-	do { list_node_init(&(mod)->list); } while(0)
+#define module_constructor(mod) list_node_init(&(mod)->list)
 
 /* Module constructors should be late than subsystem constructors,
  * in statically linked scenarios (both subsystems and modules are
  * linked statically). thus the priority 102 compared to the above
  * subsystem constructor priority 101.
  */
-#define MODULE_CONSTRUCTOR(name) 				\
+#define MODULE_CONSTRUCTOR(name)				\
 	static void __attribute__((constructor(102)))		\
 		name ## _module_constructor(void)
 
@@ -165,7 +164,7 @@ static inline int subs ## _subsystem ##_## method(void)		\
 								\
 	subsystem_lock(read, subs);				\
 	subsystem_foreach_module(subs, mod) {			\
-		int result = mod->method ? mod->method() : -1;	\
+		int result = mod->method ? mod->method() : 0;	\
 		if (result < 0) {				\
 			subsystem_unlock(read, subs);		\
 			print("error %d to %s subsystem %s "	\
@@ -199,13 +198,13 @@ static inline int subs ## _subsystem ##_## method(void)		\
  *    The module loader should program in this way:
  *	module_loader_start();
  *	......
- * 	for each module
+ *	for each module
  *		handler = dlopen(module)
  *		-- the module constructor calls register_module()
  *		if (handler is valid)
  *			install_dso(handler);
  *		else
-	 		abandon_dso();
+ *			abandon_dso();
  *      ......
  *	module_loader_end();
  */

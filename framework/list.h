@@ -49,7 +49,7 @@
 #define WRITE_ONCE(x, val)					\
 ({								\
 	volatile typeof(x) *__p = &(x);				\
-	*__p = (typeof(x)) (val);				\
+	*__p = (typeof(x))(val);				\
 })
 
 /**
@@ -65,8 +65,7 @@
  *		struct list_node list;
  *	};
  */
-struct list_node
-{
+struct list_node {
 	struct list_node *next, *prev;
 };
 
@@ -82,8 +81,7 @@ struct list_node
  *		unsigned int num_children;
  *	};
  */
-struct list_head
-{
+struct list_head {
 	struct list_node node;
 };
 
@@ -130,7 +128,8 @@ struct list_head
  */
 static inline void list_head_init(struct list_head *h)
 {
-	h->node.next = h->node.prev = &h->node;
+	h->node.next = &h->node;
+	h->node.prev = &h->node;
 }
 
 /**
@@ -142,7 +141,8 @@ static inline void list_head_init(struct list_head *h)
  */
 static inline void list_node_init(struct list_node *n)
 {
-	n->next = n->prev = n;
+	n->next = n;
+	n->prev = n;
 }
 
 /**

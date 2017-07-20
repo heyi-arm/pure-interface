@@ -11,7 +11,7 @@ static struct {
 	subsystem_t *subsystem;
 	module_base_t *module;
 } registration = {
-	.lock = RW_LOCK_UNLOCKED(lock),
+	.lock = RW_LOCK_UNLOCKED,
 	.subsystem = NULL,
 	.module = NULL,
 };
@@ -23,10 +23,10 @@ do {								\
 								\
 	if (!list_node_detached(&module->list)) {		\
 		printf("module %s was already registered.\n",	\
-		        module->name);				\
+			module->name);				\
 		return -EAGAIN;					\
 	}							\
-} while(0)
+} while (0)
 
 /* Module is linked statically or dynamically, and are loaded by
  * program loader (execve) or dynamic linker/loader (ld.so)
@@ -106,7 +106,7 @@ void module_loader_end(void)
 int module_install_dso(void *dso, bool active)
 {
 	/* Bottom halves of the registration, context exclusion
-	 * is guarenteed by module_loader_start()
+	 * is guaranteed by module_loader_start()
 	 */
 	if (0 == rwlock_write_trylock(&registration.lock)) {
 		subsystem_t *subsystem = registration.subsystem;
@@ -119,7 +119,7 @@ int module_install_dso(void *dso, bool active)
 			list_add_tail(&subsystem->modules, &module->list);
 
 			/* install as active implementation */
-			if (active == true) /* warn: replaceable */
+			if (active) /* warn: replaceable */
 				subsystem->active = &module->list;
 
 			rwlock_write_unlock(&subsystem->lock);
@@ -137,7 +137,7 @@ int module_install_dso(void *dso, bool active)
 int module_abandon_dso(void)
 {
 	/* Bottom halves of the registration, context exclusion
-	 * is guarenteed by module_loader_start()
+	 * is guaranteed by module_loader_start()
 	 */
 	if (0 == rwlock_write_trylock(&registration.lock)) {
 		registration.subsystem = NULL;

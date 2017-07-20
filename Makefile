@@ -56,7 +56,7 @@ main-plugin: main.o all-modules.o $(INTERFACE_LIBRARY)
 # in reverse order.
 main-dynamic: main.o empty-modules.o $(INTERFACE_LIBRARY) $(ALL_MODULES)
 	$(CC) $< empty-modules.o -L"${PWD}" -L"${PWD}/modules" \
-	  -Wl,-R"${PWD}/modules" -Wl,--no-as-needed $(ALL_MODULES_DYNAMIC) \
+	  -Wl,-R"${PWD}/modules" -Wl,--no-as-needed $(ALL_MODULES) \
 	  -Wl,-R"${PWD}" -Wl,--as-needed -lpure-interface -o $@
 
 main-preload: main.o empty-modules.o $(INTERFACE_LIBRARY) $(ALL_MODULES_OVERRIDE)
